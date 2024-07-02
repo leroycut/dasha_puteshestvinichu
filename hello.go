@@ -162,11 +162,17 @@ func task_18(arr []int) []int {
 }
 
 func task_19(arr []int, ind int) []int {
-	return append(arr[:ind], arr[(ind+1):])
+	return append(arr[:ind], arr[ind+1:]...)
 }
 
-func task_20(a float32) float32 {
-	return (a * 1.8) + 32
+func task_20(arr []int, val int) int {
+	res := -1
+	for i := range arr {
+		if arr[i] == val {
+			res = i
+		}
+	}
+	return res
 }
 
 func main() {
