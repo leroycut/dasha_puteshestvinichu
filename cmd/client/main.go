@@ -61,15 +61,15 @@ func do(cmd Command) error {
 		}
 
 		return nil
-	case "patch":
-		if err := patch(cmd); err != nil {
-			return fmt.Errorf("patch account failed: %w", err)
+	case "patch_name":
+		if err := patch_name(cmd); err != nil {
+			return fmt.Errorf("patch_name account failed: %w", err)
 		}
 
 		return nil
-	case "change":
-		if err := change(cmd); err != nil {
-			return fmt.Errorf("change account failed: %w", err)
+	case "patch_amount":
+		if err := patch_amount(cmd); err != nil {
+			return fmt.Errorf("patch_amount account failed: %w", err)
 		}
 
 		return nil
@@ -146,23 +146,21 @@ func create(cmd Command) error {
 }
 
 func delete(cmd Command) error {
-	request := dto.CreateAccountRequest{
-		Name:   cmd.Name,
-		Amount: cmd.Amount,
+	req, err := http.NewRequest("DELETE",
+		fmt.Sprintf("http://%s:%d/account/delete?name=%s", cmd.Host, cmd.Port, cmd.Name),
+		nil)
+
+	if err != nil {
+		return fmt.Errorf("request delete failed: %w", err)
 	}
 
-	data, err := json.Marshal(request)
-	if err != nil {
-		return fmt.Errorf("json marshal failed: %w", err)
-	}
+	req.Header.Set("Content-type", "application/json")
 
-	resp, err := http.Post(
-		fmt.Sprintf("http://%s:%d/account/delete", cmd.Host, cmd.Port),
-		"application/json",
-		bytes.NewReader(data),
-	)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
 	if err != nil {
-		return fmt.Errorf("http post failed: %w", err)
+		return fmt.Errorf("http delete failed: %w", err)
 	}
 
 	defer func() {
@@ -181,7 +179,7 @@ func delete(cmd Command) error {
 	return fmt.Errorf("resp error %s", string(body))
 }
 
-func patch(cmd Command) error {
+func patch_name(cmd Command) error {
 	request := dto.CreateAccountRequest{
 		Name:   cmd.Name,
 		Amount: cmd.Amount,
@@ -192,13 +190,21 @@ func patch(cmd Command) error {
 		return fmt.Errorf("json marshal failed: %w", err)
 	}
 
-	resp, err := http.Post(
-		fmt.Sprintf("http://%s:%d/account/patch", cmd.Host, cmd.Port),
-		"application/json",
-		bytes.NewReader(data),
-	)
+	req, err := http.NewRequest("PATCH",
+		fmt.Sprintf("http://%s:%d/account/patch_name", cmd.Host, cmd.Port),
+		bytes.NewReader(data))
+
 	if err != nil {
-		return fmt.Errorf("http post failed: %w", err)
+		return fmt.Errorf("request patch_name faild: %w", err)
+	}
+
+	req.Header.Set("Content-type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return fmt.Errorf("http patch_amount failed: %w", err)
 	}
 
 	defer func() {
@@ -217,7 +223,7 @@ func patch(cmd Command) error {
 	return fmt.Errorf("resp error %s", string(body))
 }
 
-func change(cmd Command) error {
+func patch_amount(cmd Command) error {
 	request := dto.CreateAccountRequest{
 		Name:   cmd.Name,
 		Amount: cmd.Amount,
@@ -228,13 +234,20 @@ func change(cmd Command) error {
 		return fmt.Errorf("json marshal failed: %w", err)
 	}
 
-	resp, err := http.Post(
-		fmt.Sprintf("http://%s:%d/account/change", cmd.Host, cmd.Port),
-		"application/json",
-		bytes.NewReader(data),
-	)
+	req, err := http.NewRequest("PATCH",
+		fmt.Sprintf("http://%s:%d/account/patch_amount", cmd.Host, cmd.Port),
+		bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("http post failed: %w", err)
+		return fmt.Errorf("request patch_name faild: %w", err)
+	}
+
+	req.Header.Set("Content-type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return fmt.Errorf("http patch_amount failed: %w", err)
 	}
 
 	defer func() {
