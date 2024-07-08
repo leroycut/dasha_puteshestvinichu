@@ -96,14 +96,14 @@ func (h *Handler) DeleteAccount(c echo.Context) error {
 }
 
 func (h *Handler) PatchAccount_name(c echo.Context) error {
-	var request dto.ChangeAccountRequest // {"name": "alice", "amount": 50}
+	var request dto.ChangeAccountRequest_name // {"name": "alice", "name": "Bob"}
 	if err := c.Bind(&request); err != nil {
 		c.Logger().Error(err)
 
 		return c.String(http.StatusBadRequest, "invalid request")
 	}
 
-	if len(request.Name) == 0 {
+	if len(request.Name) == 0 || len(request.New_name) == 0 {
 		return c.String(http.StatusBadRequest, "empty name")
 	}
 
@@ -112,16 +112,23 @@ func (h *Handler) PatchAccount_name(c echo.Context) error {
 	if _, ok := h.accounts[request.Name]; !ok {
 		h.guard.Unlock()
 
-		return c.String(http.StatusForbidden, "account doesn't exists")
+		return c.String(http.StatusConflict, "current name doesn't exists")
 	}
 
-	if _, ok := h.accounts[request.Name]; ok {
+	if _, ok := h.accounts[request.New_name]; ok {
 		h.guard.Unlock()
 
-		return c.String(http.StatusConflict, "this name exists")
+		return c.String(http.StatusConflict, "new name exists")
 	}
 
-	h.accounts[request.Name].Name = request.Name
+	h.accounts[request.New_name].Name = request.Name
+
+	delete(h.accounts, request.Name)
+
+	h.accounts[request.Name] = &models.Account{
+		Name:   request.Name,
+		Amount: h.accounts[request.Name].Amount,
+	}
 
 	h.guard.Unlock()
 
