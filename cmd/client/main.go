@@ -19,19 +19,6 @@ type Command struct {
 	Amount int
 }
 
-func (c *Command) Do() error {
-	switch c.Cmd {
-	case "create":
-		return c.create()
-	default:
-		return fmt.Errorf("unknown command: %s", c.Cmd)
-	}
-}
-
-func (c *Command) create() error {
-	panic("implement me")
-}
-
 func main() {
 	portVal := flag.Int("port", 8080, "server port")
 	hostVal := flag.String("host", "0.0.0.0", "server host")
@@ -65,6 +52,24 @@ func do(cmd Command) error {
 	case "get":
 		if err := get(cmd); err != nil {
 			return fmt.Errorf("get account failed: %w", err)
+		}
+
+		return nil
+	case "delete":
+		if err := delete(cmd); err != nil {
+			return fmt.Errorf("delete account failed: %w", err)
+		}
+
+		return nil
+	case "patch":
+		if err := patch(cmd); err != nil {
+			return fmt.Errorf("patch account failed: %w", err)
+		}
+
+		return nil
+	case "change":
+		if err := change(cmd); err != nil {
+			return fmt.Errorf("change account failed: %w", err)
 		}
 
 		return nil
@@ -117,6 +122,114 @@ func create(cmd Command) error {
 
 	resp, err := http.Post(
 		fmt.Sprintf("http://%s:%d/account/create", cmd.Host, cmd.Port),
+		"application/json",
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		return fmt.Errorf("http post failed: %w", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusCreated {
+		return nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read body failed: %w", err)
+	}
+
+	return fmt.Errorf("resp error %s", string(body))
+}
+
+func delete(cmd Command) error {
+	request := dto.CreateAccountRequest{
+		Name:   cmd.Name,
+		Amount: cmd.Amount,
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("json marshal failed: %w", err)
+	}
+
+	resp, err := http.Post(
+		fmt.Sprintf("http://%s:%d/account/delete", cmd.Host, cmd.Port),
+		"application/json",
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		return fmt.Errorf("http post failed: %w", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusCreated {
+		return nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read body failed: %w", err)
+	}
+
+	return fmt.Errorf("resp error %s", string(body))
+}
+
+func patch(cmd Command) error {
+	request := dto.CreateAccountRequest{
+		Name:   cmd.Name,
+		Amount: cmd.Amount,
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("json marshal failed: %w", err)
+	}
+
+	resp, err := http.Post(
+		fmt.Sprintf("http://%s:%d/account/patch", cmd.Host, cmd.Port),
+		"application/json",
+		bytes.NewReader(data),
+	)
+	if err != nil {
+		return fmt.Errorf("http post failed: %w", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode == http.StatusCreated {
+		return nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("read body failed: %w", err)
+	}
+
+	return fmt.Errorf("resp error %s", string(body))
+}
+
+func change(cmd Command) error {
+	request := dto.CreateAccountRequest{
+		Name:   cmd.Name,
+		Amount: cmd.Amount,
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("json marshal failed: %w", err)
+	}
+
+	resp, err := http.Post(
+		fmt.Sprintf("http://%s:%d/account/change", cmd.Host, cmd.Port),
 		"application/json",
 		bytes.NewReader(data),
 	)
