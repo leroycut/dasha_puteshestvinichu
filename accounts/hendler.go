@@ -74,33 +74,28 @@ func (h *Handler) GetAccount(c echo.Context) error {
 }
 
 func (h *Handler) DeleteAccount(c echo.Context) error {
-	var request dto.ChangeAccountRequest // {"name": "alice", "amount": 50}
-	if err := c.Bind(&request); err != nil {
-		c.Logger().Error(err)
+	name := c.QueryParams().Get("name")
 
-		return c.String(http.StatusBadRequest, "invalid request")
-	}
-
-	if len(request.Name) == 0 {
+	if len(name) == 0 {
 		return c.String(http.StatusBadRequest, "empty name")
 	}
 
 	h.guard.Lock()
 
-	if _, ok := h.accounts[request.Name]; ok {
+	if _, ok := h.accounts[name]; !ok {
 		h.guard.Unlock()
 
 		return c.String(http.StatusForbidden, "account doesn't exists")
 	}
 
-	delete(h.accounts, request.Name)
+	delete(h.accounts, name)
 
 	h.guard.Unlock()
 
 	return c.NoContent(http.StatusCreated)
 }
 
-func (h *Handler) PatchAccount(c echo.Context) error {
+func (h *Handler) PatchAccount_name(c echo.Context) error {
 	var request dto.ChangeAccountRequest // {"name": "alice", "amount": 50}
 	if err := c.Bind(&request); err != nil {
 		c.Logger().Error(err)
@@ -114,40 +109,46 @@ func (h *Handler) PatchAccount(c echo.Context) error {
 
 	h.guard.Lock()
 
-	if _, ok := h.accounts[request.Name]; ok == false {
+	if _, ok := h.accounts[request.Name]; !ok {
+		h.guard.Unlock()
+
+		return c.String(http.StatusForbidden, "account doesn't exists")
+	}
+
+	if _, ok := h.accounts[request.Name]; ok {
+		h.guard.Unlock()
+
+		return c.String(http.StatusConflict, "this name exists")
+	}
+
+	h.accounts[request.Name].Name = request.Name
+
+	h.guard.Unlock()
+
+	return c.NoContent(http.StatusCreated)
+}
+
+func (h *Handler) PatchAccount_amount(c echo.Context) error {
+	var request dto.ChangeAccountRequest // {"name": "alice", "amount": 50}
+	if err := c.Bind(&request); err != nil {
+		c.Logger().Error(err)
+
+		return c.String(http.StatusBadRequest, "invalid request")
+	}
+
+	if len(request.Name) == 0 {
+		return c.String(http.StatusBadRequest, "empty name")
+	}
+
+	h.guard.Lock()
+
+	if _, ok := h.accounts[request.Name]; !ok {
 		h.guard.Unlock()
 
 		return c.String(http.StatusForbidden, "account doesn't exists")
 	}
 
 	h.accounts[request.Name].Amount = request.Amount
-
-	h.guard.Unlock()
-
-	return c.NoContent(http.StatusCreated)
-}
-
-func (h *Handler) ChangeAccount(c echo.Context) error {
-	var request dto.ChangeAccountRequest // {"name": "alice", "amount": 50}
-	if err := c.Bind(&request); err != nil {
-		c.Logger().Error(err)
-
-		return c.String(http.StatusBadRequest, "invalid request")
-	}
-
-	if len(request.Name) == 0 {
-		return c.String(http.StatusBadRequest, "empty name")
-	}
-
-	h.guard.Lock()
-
-	if _, ok := h.accounts[request.Name]; ok == false {
-		h.guard.Unlock()
-
-		return c.String(http.StatusForbidden, "account doesn't exists")
-	}
-
-	h.accounts[request.Name].Name = request.Name
 
 	h.guard.Unlock()
 

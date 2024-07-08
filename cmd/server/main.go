@@ -19,8 +19,8 @@ func main() {
 	e.GET("/account", accountsHandler.GetAccount)
 	e.POST("/account/create", accountsHandler.CreateAccount)
 	e.DELETE("/account/delete", accountsHandler.DeleteAccount)
-	e.PATCH("/account/patch", accountsHandler.PatchAccount)
-	e.PATCH("/account/change", accountsHandler.ChangeAccount)
+	e.PATCH("/account/patch_name", accountsHandler.PatchAccount_name)
+	e.PATCH("/account/patch_amount", accountsHandler.PatchAccount_amount)
 
 	//start server
 	e.Logger.Fatal(e.Start(":1323"))
