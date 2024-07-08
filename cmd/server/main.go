@@ -22,6 +22,6 @@ func main() {
 	e.PATCH("/account/patch", accountsHandler.PatchAccount)
 	e.PATCH("/account/change", accountsHandler.ChangeAccount)
 
-	// Start server
+	//start server
 	e.Logger.Fatal(e.Start(":1323"))
 }
