@@ -121,14 +121,12 @@ func (h *Handler) PatchAccount_name(c echo.Context) error {
 		return c.String(http.StatusConflict, "new name exists")
 	}
 
-	h.accounts[request.New_name].Name = request.Name
-
-	delete(h.accounts, request.Name)
-
-	h.accounts[request.Name] = &models.Account{
-		Name:   request.Name,
+	h.accounts[request.New_name] = &models.Account{
+		Name:   request.New_name,
 		Amount: h.accounts[request.Name].Amount,
 	}
+
+	delete(h.accounts, request.Name)
 
 	h.guard.Unlock()
 
