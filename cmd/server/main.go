@@ -1,7 +1,7 @@
 package main
 
 import (
-	"example.com/m/accounts"
+	"dasha_puteshestvinichu/accounts"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )

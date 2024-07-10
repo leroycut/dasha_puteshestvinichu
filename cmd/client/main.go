@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"example.com/m/accounts/dto"
+	"dasha_puteshestvinichu/accounts/dto"
 )
 
 type Command struct {

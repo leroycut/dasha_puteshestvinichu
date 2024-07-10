@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"sync"
 
-	"example.com/m/accounts/dto"
-	"example.com/m/accounts/models"
+	"dasha_puteshestvinichu/accounts/dto"
+	"dasha_puteshestvinichu/accounts/models"
 
 	"github.com/labstack/echo/v4"
 )
