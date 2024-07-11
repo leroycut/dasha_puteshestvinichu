@@ -31,6 +31,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
+	// c.Create(ctx, &proto.HelloRequest{Name: *name})
+
 	res, err := c.SayHello(ctx, &proto.HelloRequest{Name: *name})
 	if err != nil {
 		panic(err)
