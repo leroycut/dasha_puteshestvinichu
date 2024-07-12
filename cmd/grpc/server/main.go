@@ -122,7 +122,7 @@ func (s *server) ChangeAccount(ctx context.Context, req *proto.ChangeAccountRequ
 	if _, ok := s.accounts[req.NewName]; ok {
 		s.guard.Unlock()
 
-		return nil, status.Error(codes.AlreadyExists, "account with this name already exists")
+		return nil, status.Error(codes.AlreadyExists, "this name exists")
 	}
 
 	s.accounts[req.NewName] = &models.Account{
@@ -144,7 +144,9 @@ func main() {
 	}
 
 	s := grpc.NewServer()
+
 	proto.RegisterBankServer(s, NewServer())
+	
 	if err := s.Serve(lis); err != nil {
 		panic(err)
 	}
