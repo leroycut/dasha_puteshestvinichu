@@ -13,95 +13,228 @@ import (
 	status "google.golang.org/grpc/status"
 )
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// GreeterClient is the client API for Greeter service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GreeterClient interface {
-	// Sends a greeting
-	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
+type BankClient interface {
+	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
+	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Empty, error)
+	PatchAccount(ctx context.Context, in *PatchAccountRequest, opts ...grpc.CallOption) (*Empty, error)
+	ChangeAccount(ctx context.Context, in *ChangeAccountRequest, opts ...grpc.CallOption) (*Empty, error)
+	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
-type greeterClient struct {
+type bankClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGreeterClient(cc grpc.ClientConnInterface) GreeterClient {
-	return &greeterClient{cc}
+func NewBankClient(cc grpc.ClientConnInterface) BankClient {
+	return &bankClient{cc}
 }
 
-func (c *greeterClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
-	out := new(HelloReply)
-	err := c.cc.Invoke(ctx, "/proto.Greeter/SayHello", in, out, opts...)
+func (c *bankClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error) {
+	out := new(GetAccountResponse)
+	err := c.cc.Invoke(ctx, "/proto.Bank/GetAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GreeterServer is the server API for Greeter service.
-// All implementations must embed UnimplementedGreeterServer
-// for forward compatibility
-type GreeterServer interface {
-	// Sends a greeting
-	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
-	mustEmbedUnimplementedGreeterServer()
+func (c *bankClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/proto.Bank/CreateAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedGreeterServer must be embedded to have forward compatible implementations.
-type UnimplementedGreeterServer struct {
+func (c *bankClient) PatchAccount(ctx context.Context, in *PatchAccountRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/proto.Bank/PatchAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-func (UnimplementedGreeterServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
+func (c *bankClient) ChangeAccount(ctx context.Context, in *ChangeAccountRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/proto.Bank/ChangeAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
-func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
 
-// UnsafeGreeterServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GreeterServer will
+func (c *bankClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/proto.Bank/DeleteAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+type BankServer interface {
+	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
+	CreateAccount(context.Context, *CreateAccountRequest) (*Empty, error)
+	PatchAccount(context.Context, *PatchAccountRequest) (*Empty, error)
+	ChangeAccount(context.Context, *ChangeAccountRequest) (*Empty, error)
+	DeleteAccount(context.Context, *DeleteAccountRequest) (*Empty, error)
+	mustEmbedUnimplementedBankServer()
+}
+
+type UnimplementedBankServer struct {
+}
+
+func (UnimplementedBankServer) GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
+}
+func (UnimplementedBankServer) CreateAccount(context.Context, *CreateAccountRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
+}
+func (UnimplementedBankServer) PatchAccount(context.Context, *PatchAccountRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchAccount not implemented")
+}
+func (UnimplementedBankServer) ChangeAccount(context.Context, *ChangeAccountRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeAccount not implemented")
+}
+func (UnimplementedBankServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
+}
+func (UnimplementedBankServer) mustEmbedUnimplementedBankServer() {}
+
+// UnsafeBankServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BankServer will
 // result in compilation errors.
-type UnsafeGreeterServer interface {
-	mustEmbedUnimplementedGreeterServer()
+type UnsafeBankServer interface {
+	mustEmbedUnimplementedBankServer()
 }
 
-func RegisterGreeterServer(s grpc.ServiceRegistrar, srv GreeterServer) {
-	s.RegisterService(&Greeter_ServiceDesc, srv)
+func RegisterBankServer(s grpc.ServiceRegistrar, srv BankServer) {
+	s.RegisterService(&Bank_ServiceDesc, srv)
 }
 
-func _Greeter_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
+func _Bank_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GreeterServer).SayHello(ctx, in)
+		return srv.(BankServer).GetAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Greeter/SayHello",
+		FullMethod: "/proto.Bank/GetAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GreeterServer).SayHello(ctx, req.(*HelloRequest))
+		return srv.(BankServer).GetAccount(ctx, req.(*GetAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
+func _Bank_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServer).CreateAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Bank/CreateAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServer).CreateAccount(ctx, req.(*CreateAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Bank_PatchAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServer).PatchAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Bank/PatchAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServer).PatchAccount(ctx, req.(*PatchAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Bank_ChangeAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServer).ChangeAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Bank/ChangeAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServer).ChangeAccount(ctx, req.(*ChangeAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Bank_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BankServer).DeleteAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Bank/DeleteAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BankServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Bank_ServiceDesc is the grpc.ServiceDesc for Bank service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Greeter_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Greeter",
-	HandlerType: (*GreeterServer)(nil),
+var Bank_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.Bank",
+	HandlerType: (*BankServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SayHello",
-			Handler:    _Greeter_SayHello_Handler,
+			MethodName: "GetAccount",
+			Handler:    _Bank_GetAccount_Handler,
+		},
+		{
+			MethodName: "CreateAccount",
+			Handler:    _Bank_CreateAccount_Handler,
+		},
+		{
+			MethodName: "PatchAccount",
+			Handler:    _Bank_PatchAccount_Handler,
+		},
+		{
+			MethodName: "ChangeAccount",
+			Handler:    _Bank_ChangeAccount_Handler,
+		},
+		{
+			MethodName: "DeleteAccount",
+			Handler:    _Bank_DeleteAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/echo.proto",
+	Metadata: "echo.proto",
 }
+

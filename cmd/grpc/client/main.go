@@ -11,13 +11,36 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+type Command struct {
+	Port    int
+	Host    string
+	Cmd     string
+	Name    string
+	Amount  int
+	NewName string
+}
+
 func main() {
-	name := flag.String("name", "pockemon", "user")
+	portVal := flag.Int("port", 8080, "server port")
+	hostVal := flag.String("host", "0.0.0.0", "server host")
+	cmdVal := flag.String("cmd", "", "command to execute")
+	nameVal := flag.String("name", "", "name of account")
+	amountVal := flag.Int("amount", 0, "amount of account")
+	newNameVal := flag.String("new_name", "", "new name of account")
 
 	flag.Parse()
 
-	conn, err := grpc.NewClient("0.0.0.0:1354", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cmd := Command{
+		Port:    *portVal,
+		Host:    *hostVal,
+		Cmd:     *cmdVal,
+		Name:    *nameVal,
+		Amount:  *amountVal,
+		NewName: *newNameVal,
+	}
 
+	conn, err := grpc.NewClient(fmt.Sprintf("%s:%d", cmd.Host, cmd.Port),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
 	}
@@ -26,17 +49,61 @@ func main() {
 		_ = conn.Close()
 	}()
 
-	c := proto.NewGreeterClient(conn)
+	c := proto.NewBankClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	// c.Create(ctx, &proto.HelloRequest{Name: *name})
-
-	res, err := c.SayHello(ctx, &proto.HelloRequest{Name: *name})
-	if err != nil {
+	if err := do(ctx, cmd, c); err != nil {
 		panic(err)
 	}
+}
 
-	fmt.Printf("Greetings: %s", res.Message)
+func do(ctx context.Context, cmd Command, c proto.BankClient) error {
+	switch cmd.Cmd {
+	case "create":
+		_, err := c.CreateAccount(ctx, &proto.CreateAccountRequest{
+			Name:   cmd.Name,
+			Amount: int32(cmd.Amount),
+		})
+		if err != nil {
+			return err
+		}
+	case "get":
+		resp, err := c.GetAccount(ctx, &proto.GetAccountRequest{
+			Name: cmd.Name,
+		})
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("response account name: %s and amount: %d\n", resp.Name, resp.Amount)
+	case "delete":
+		_, err := c.DeleteAccount(ctx, &proto.DeleteAccountRequest{
+			Name: cmd.Name,
+		})
+		if err != nil {
+			return err
+		}
+	case "patch_amount":
+		_, err := c.PatchAccount(ctx, &proto.PatchAccountRequest{
+			Name:   cmd.Name,
+			Amount: int32(cmd.Amount),
+		})
+		if err != nil {
+			return err
+		}
+	case "patch_name":
+		_, err := c.ChangeAccount(ctx, &proto.ChangeAccountRequest{
+			Name:    cmd.Name,
+			NewName: cmd.NewName,
+		})
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown command %s", cmd.Cmd)
+	}
+	
+	return nil
 }
