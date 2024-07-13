@@ -6,7 +6,7 @@ import (
 	"dasha_puteshestvinichu/proto"
 	"fmt"
 	"net"
-	"sync"
+	"database/sql"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,15 +15,35 @@ import (
 
 type server struct {
 	proto.UnimplementedBankServer
-	accounts map[string]*models.Account
-	guard    *sync.RWMutex
+	db *sql.DB
 }
 
-func NewServer() *server {
-	return &server{
-		accounts: make(map[string]*models.Account),
-		guard:    &sync.RWMutex{},
-	}
+func (s *server) GetAccountFromStorage(Name string) (models.Account, error) {
+	row := s.db.QueryRow("SELECT name, amount FROM accounts WHERE name=$1", Name)
+	response := models.Account{}
+	err := row.Scan(&response.Name, &response.Amount)
+	
+	return response, err
+}
+
+func (s *server) InsertAccountToStorage(account models.Account) error {
+	_, err := s.db.Exec("INSERT INTO accounts(name, amount) VALUES($1, $2)", account.Name, account.Amount)
+	return err
+}
+
+func (s *server) DeleteAccountFromStorage(Name string) error {
+	_, err := s.db.Exec("DELETE FROM accounts WHERE name=$1", Name)
+	return err
+}
+
+func (s *server) ChangeAccountAmountInStorage(account models.Account) error {
+	_, err := s.db.Exec("UPDATE accounts SET amount=$1 WHERE name=$2", account.Amount, account.Name)
+	return err
+}
+
+func (s *server) ChangeAccountNameInStorage(Name, NewName string) error {
+	_, err := s.db.Exec("UPDATE accounts SET name=$1 WHERE name=$2", NewName, Name)
+	return err
 }
 
 func (s *server) CreateAccount(ctx context.Context, req *proto.CreateAccountRequest) (*proto.Empty, error) {
@@ -31,37 +51,31 @@ func (s *server) CreateAccount(ctx context.Context, req *proto.CreateAccountRequ
 		return nil, status.Error(codes.InvalidArgument, "empty name")
 	}
 
-	s.guard.Lock()
-
-	if _, ok := s.accounts[req.Name]; ok {
-		s.guard.Unlock()
-
+	if _, err := s.GetAccountFromStorage(req.Name); err == nil {
 		return nil, status.Error(codes.AlreadyExists, "account already exists")
 	}
 
-	s.accounts[req.Name] = &models.Account{
+	err := s.InsertAccountToStorage(models.Account{
 		Name:   req.Name,
 		Amount: int(req.Amount),
-	}
+	})
 
-	s.guard.Unlock()
+	if err != nil {
+		return nil, err
+	}
 
 	return &proto.Empty{}, nil
 }
 
 func (s *server) GetAccount(ctx context.Context, req *proto.GetAccountRequest) (*proto.GetAccountResponse, error) {
-	s.guard.Lock()
+	account, err := s.GetAccountFromStorage(req.Name)
 
-	account, ok := s.accounts[req.Name]
-
-	s.guard.Unlock()
-
-	if !ok {
+	if err != nil {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
 
 	response := proto.GetAccountResponse{
-		Name:   account.Name,
+		Name: account.Name,
 		Amount: int32(account.Amount),
 	}
 
@@ -69,19 +83,16 @@ func (s *server) GetAccount(ctx context.Context, req *proto.GetAccountRequest) (
 }
 
 func (s *server) DeleteAccount(ctx context.Context, req *proto.DeleteAccountRequest) (*proto.Empty, error) {
-	s.guard.Lock()
+	_, err := s.GetAccountFromStorage(req.Name)
 
-	_, ok := s.accounts[req.Name]
-
-	if !ok {
-		s.guard.Unlock()
-
+	if err != nil {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
 
-	delete(s.accounts, req.Name)
-
-	s.guard.Unlock()
+	err = s.DeleteAccountFromStorage(req.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	return &proto.Empty{}, nil
 }
@@ -91,62 +102,41 @@ func (s *server) PatchAccount(ctx context.Context, req *proto.PatchAccountReques
 		return nil, status.Error(codes.InvalidArgument, "empty name")
 	}
 
-	s.guard.Lock()
+	
 
-	if _, ok := s.accounts[req.Name]; !ok {
-		s.guard.Unlock()
-
+	if _, err := s.GetAccountFromStorage(req.Name); err != nil {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
 
-	s.accounts[req.Name].Amount = int(req.Amount)
+	err := s.ChangeAccountAmountInStorage(models.Account{
+		Name:   req.Name,
+		Amount: int(req.Amount),
+	})
 
-	s.guard.Unlock()
-
-	return &proto.Empty{}, nil
-}
-
-func (s *server) ChangeAccount(ctx context.Context, req *proto.ChangeAccountRequest) (*proto.Empty, error) {
-	if len(req.Name) == 0 || len(req.NewName) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty name")
+	if err != nil {
+		return nil, err
 	}
-
-	s.guard.Lock()
-
-	if _, ok := s.accounts[req.Name]; !ok {
-		s.guard.Unlock()
-
-		return nil, status.Error(codes.NotFound, "account not found")
-	}
-
-	if _, ok := s.accounts[req.NewName]; ok {
-		s.guard.Unlock()
-
-		return nil, status.Error(codes.AlreadyExists, "this name exists")
-	}
-
-	s.accounts[req.NewName] = &models.Account{
-		Name:   req.NewName,
-		Amount: s.accounts[req.Name].Amount,
-	}
-
-	delete(s.accounts, req.Name)
-
-	s.guard.Unlock()
 
 	return &proto.Empty{}, nil
 }
 
 func main() {
+	connectionString := "host=0.0.0.0 port=1323 dbname=postgres user=postgres password=password"
+	
+	db, err := sql.Open("pgx", connectionString)
+	if err != nil {
+		panic(err)
+	}
+
+	defer db.Close()
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 1323))
 	if err != nil {
 		panic(err)
 	}
 
 	s := grpc.NewServer()
-
-	proto.RegisterBankServer(s, NewServer())
-	
+	proto.RegisterBankServer(s, &server{db: db})
 	if err := s.Serve(lis); err != nil {
 		panic(err)
 	}
